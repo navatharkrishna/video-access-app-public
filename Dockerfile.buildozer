@@ -1,22 +1,29 @@
+# Base image
 FROM python:3.10-slim
 
 # Install dependencies for Buildozer
 RUN apt-get update && \
     apt-get install -y \
-    git \
-    zip \
-    unzip \
-    openjdk-8-jdk \
-    python3-pip \
-    python3-setuptools \
-    python3-dev \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    libsqlite3-dev \
-    curl \
-    wget && \
-    pip install --upgrade pip && \
-    pip install buildozer cython
+        git \
+        zip \
+        unzip \
+        openjdk-11-jdk \
+        python3-pip \
+        python3-setuptools \
+        python3-dev \
+        build-essential \
+        libssl-dev \
+        libffi-dev \
+        libsqlite3-dev \
+        curl \
+        wget \
+        default-mysql-client \
+        pkg-config && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip and install Python packages for Buildozer
+RUN pip install --upgrade pip
+RUN pip install buildozer cython
+
+# Set working directory
 WORKDIR /home/build
