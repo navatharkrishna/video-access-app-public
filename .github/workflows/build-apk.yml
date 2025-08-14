@@ -8,6 +8,9 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    env:
+      BUILDOZER_ALLOW_ROOT: 1   # Allows Buildozer to run as root
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -15,15 +18,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image for buildozer
+      - name: Build Docker image for Buildozer
         run: docker build -f Dockerfile.buildozer -t kivy-buildozer:latest .
+
       - name: Run build container to make APK
         run: |
           # Start container
           CONTAINER_ID=$(docker run -d --name buildozer_run kivy-buildozer:latest tail -f /dev/null)
 
-          # Run Buildozer with --no-confirm to avoid interactive prompts
-          docker exec $CONTAINER_ID bash -lc "cd /home/build && buildozer -v android debug --no-confirm"
+          # Run Buildozer with --no-confirm and --no-root to avoid interactive prompts
+          docker exec $CONTAINER_ID bash -lc "cd /home/build && buildozer -v android debug --no-confirm --no-root"
 
           # Copy APK from container to host
           docker cp $CONTAINER_ID:/home/build/bin ./bin || true
