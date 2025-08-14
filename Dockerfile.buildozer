@@ -31,3 +31,8 @@ RUN useradd -m build && chown -R build:build /home/build
 # Switch to non-root user
 USER build
 WORKDIR /home/build
+
+# Ensure mounted directories will be writable
+# (create .buildozer folder in advance)
+RUN mkdir -p /home/build/.buildozer && \
+    chown -R build:build /home/build/.buildozer
