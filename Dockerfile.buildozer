@@ -1,38 +1,45 @@
-# Base image
-FROM python:3.10-slim
+name: Build Android APK (Buildozer Docker)
 
-# Install dependencies for Buildozer
-RUN apt-get update && \
-    apt-get install -y \
-        git \
-        zip \
-        unzip \
-        default-jdk \
-        python3-pip \
-        python3-setuptools \
-        python3-dev \
-        build-essential \
-        libssl-dev \
-        libffi-dev \
-        libsqlite3-dev \
-        curl \
-        wget \
-        default-mysql-client \
-        pkg-config && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:   # Allows manual trigger
 
-# Upgrade pip and install Python packages for Buildozer
-RUN pip install --upgrade pip
-RUN pip install buildozer cython
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
 
-# Create a non-root user
-RUN useradd -m build && chown -R build:build /home/build
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-# Switch to non-root user
-USER build
-WORKDIR /home/build
+      # Step 2: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-# Ensure mounted directories will be writable
-# (create .buildozer folder in advance)
-RUN mkdir -p /home/build/.buildozer && \
-    chown -R build:build /home/build/.buildozer
+      # Step 3: Build Docker image for Buildozer
+      - name: Build Docker image for Buildozer
+        run: docker build -f Dockerfile.buildozer -t kivy-buildozer:latest .
+
+      # Step 4: Run Docker container and build APK
+      - name: Run build container to make APK
+        run: |
+          # Start container with repo mounted
+          CONTAINER_ID=$(docker run -d --name buildozer_run -v $GITHUB_WORKSPACE:/home/build kivy-buildozer:latest tail -f /dev/null)
+
+          # Set a writable BUILDOZER_HOME inside container
+          docker exec $CONTAINER_ID bash -lc "export BUILDOZER_HOME=/tmp/.buildozer && mkdir -p \$BUILDOZER_HOME && buildozer -v android debug --no-confirm"
+
+          # Copy APK from container to host
+          docker cp $CONTAINER_ID:/home/build/bin ./bin || true
+
+          # Remove container
+          docker rm -f $CONTAINER_ID
+
+      # Step 5: Upload APK artifact
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: bin/*.apk
