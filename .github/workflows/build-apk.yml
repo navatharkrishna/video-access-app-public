@@ -17,7 +17,6 @@ jobs:
 
       - name: Build Docker image for buildozer
         run: docker build -f Dockerfile.buildozer -t kivy-buildozer:latest .
-
       - name: Run build container to make APK
         run: |
           # Start container
