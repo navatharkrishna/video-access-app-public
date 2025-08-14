@@ -25,5 +25,9 @@ RUN apt-get update && \
 RUN pip install --upgrade pip
 RUN pip install buildozer cython
 
-# Set working directory
+# Create a non-root user
+RUN useradd -m build && chown -R build:build /home/build
+
+# Switch to non-root user
+USER build
 WORKDIR /home/build
