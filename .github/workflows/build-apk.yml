@@ -18,14 +18,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 3: Build Docker image for Buildozer
+      # Step 3: Build Docker image for Buildozer (force no-cache to avoid old buildozer version)
       - name: Build Docker image for Buildozer
-        run: docker build -f Dockerfile.buildozer -t kivy-buildozer:latest .
+        run: docker build --no-cache -f Dockerfile.buildozer -t kivy-buildozer:latest .
 
       # Step 4: Run Docker container and build APK
       - name: Run build container to make APK
         run: |
-          # Start container with BUILDOZER_ALLOW_ROOT set
+          # Start container with environment variables
           CONTAINER_ID=$(docker run -d \
             --name buildozer_run \
             -e BUILDOZER_ALLOW_ROOT=1 \
@@ -34,7 +34,7 @@ jobs:
             kivy-buildozer:latest tail -f /dev/null)
 
           # Run Buildozer inside container
-          docker exec $CONTAINER_ID bash -lc "mkdir -p \$BUILDOZER_HOME && buildozer -v android debug --no-confirm --accept-android-license"
+          docker exec $CONTAINER_ID bash -lc "mkdir -p \$BUILDOZER_HOME && buildozer -v android debug --accept-android-license"
 
           # Copy APK from container to host
           docker cp $CONTAINER_ID:/home/build/bin ./bin || true
