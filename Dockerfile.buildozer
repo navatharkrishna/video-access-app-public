@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev libjpeg-dev libpng-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install Cython + Buildozer
-RUN pip3 install --upgrade pip cython buildozer
+# Upgrade pip and install latest Buildozer from GitHub
+RUN pip3 install --upgrade pip cython git+https://github.com/kivy/buildozer.git
 
 # Set working directory
 WORKDIR /home/build
