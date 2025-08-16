@@ -28,8 +28,8 @@ jobs:
           # Start container with repo mounted
           CONTAINER_ID=$(docker run -d --name buildozer_run -v $GITHUB_WORKSPACE:/home/build kivy-buildozer:latest tail -f /dev/null)
 
-          # Run Buildozer inside container
-          docker exec $CONTAINER_ID bash -lc "cd /home/build && buildozer -v android debug --no-confirm"
+          # Set a writable BUILDOZER_HOME inside container
+          docker exec $CONTAINER_ID bash -lc "export BUILDOZER_HOME=/tmp/.buildozer && mkdir -p \$BUILDOZER_HOME && buildozer -v android debug --no-confirm"
 
           # Copy APK from container to host
           docker cp $CONTAINER_ID:/home/build/bin ./bin || true
