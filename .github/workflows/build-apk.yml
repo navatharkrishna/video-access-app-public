@@ -25,11 +25,16 @@ jobs:
       # Step 4: Run Docker container and build APK
       - name: Run build container to make APK
         run: |
-          # Start container with repo mounted
-          CONTAINER_ID=$(docker run -d --name buildozer_run -v $GITHUB_WORKSPACE:/home/build kivy-buildozer:latest tail -f /dev/null)
+          # Start container with BUILDOZER_ALLOW_ROOT set
+          CONTAINER_ID=$(docker run -d \
+            --name buildozer_run \
+            -e BUILDOZER_ALLOW_ROOT=1 \
+            -e BUILDOZER_HOME=/tmp/.buildozer \
+            -v $GITHUB_WORKSPACE:/home/build \
+            kivy-buildozer:latest tail -f /dev/null)
 
-          # Run Buildozer inside container with root check disabled
-          docker exec $CONTAINER_ID bash -lc "export BUILDOZER_ALLOW_ROOT=1 && export BUILDOZER_HOME=/tmp/.buildozer && mkdir -p \$BUILDOZER_HOME && buildozer -v android debug --no-confirm --accept-android-license"
+          # Run Buildozer inside container
+          docker exec $CONTAINER_ID bash -lc "mkdir -p \$BUILDOZER_HOME && buildozer -v android debug --no-confirm --accept-android-license"
 
           # Copy APK from container to host
           docker cp $CONTAINER_ID:/home/build/bin ./bin || true
